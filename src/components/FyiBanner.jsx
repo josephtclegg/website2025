@@ -1,23 +1,23 @@
 import React, { useRef, useEffect, useState } from 'react';
-import textImgSrc from '../assets/juusfyi.png';
-import bgImgSrc from '../assets/smileysbanner.png';
+import textImgSrc from '../assets/ghostbannertext_large.png';
+import bgImgSrc from '../assets/greensmileysbanner_large.png';
 
 function FyiBanner() {
   const canvasRef = useRef(null);
-  const [containerSize, setContainerSize] = useState({width: 792, height: 256});
+  const [containerSize, setContainerSize] = useState({width: 1024, height: 128});
 
   useEffect(() => {
     //const container = canvasRef.current;
     //setContainerSize({
     //  width: container.clientWidth,
-    //  height: container.clientWidth*(256/792)
+    //  height: container.clientWidth*(128/1024)
     //});
     //const resizeObserver = new ResizeObserver(entries => {
     //  for (const entry of entries) {
     //    const { width } = entry.contentRect;
     //    setContainerSize({
     //      width: width,
-    //      height: width * (256/792)
+    //      height: width * (128/1024)
     //    });
     //  }
     //});
@@ -32,7 +32,7 @@ function FyiBanner() {
       //const width = container.clientWidth;
       setContainerSize({
         width: width,
-        height: width * (256/792) //Maintain aspect ratio
+        height: width * (128/1024) //Maintain aspect ratio
       });
     }
     updateSize();
@@ -123,6 +123,12 @@ function FyiBanner() {
         return sqrt(x_dist * x_dist + y_dist * y_dist);
       }
 
+      vec3 hsv2rgb(vec3 c) {
+          vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+          vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+          return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+      }
+
       void main() {
         float r = radius*32.;
         float t = time;
@@ -130,13 +136,20 @@ function FyiBanner() {
         if (dist2d(gl_FragCoord.xy, mp) < r) {
           st = rotate2d(dist2d(gl_FragCoord.xy, mp)/r/2.)*st;
         }
+        float hue = mod((gl_FragCoord.x/512.)+time/2., 8.0) / 8.0;
+        vec3 hsv = vec3(hue, 1.0, 1.0);
+        vec4 rainbow = vec4(hsv2rgb(hsv), 1.0);
         vec4 texcolor = texture2D(texture1,  vec2(st.x, st.y+sin(16.*st.x+t)/16.));
         vec4 texcolor2 = texture2D(texture2, st);
         vec4 tex12 = vec4(
           texcolor.rgb * texcolor.a + texcolor2.rgb * (1.0 - texcolor.a),
           texcolor.a + texcolor2.a * (1.0 - texcolor.a)
         );
-        gl_FragColor = tex12;
+        vec4 texrainbow = vec4(
+          tex12.rgb * tex12.a + rainbow.rgb * (1.0 - tex12.a),
+          tex12.a + rainbow.a * (1.0 - tex12.a)
+        );
+        gl_FragColor = texrainbow;
       }
     `;
     function createBanner() {
