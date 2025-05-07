@@ -4,30 +4,13 @@ import bgImgSrc from '../assets/greensmileysbanner_large.png';
 
 function FyiBanner() {
   const canvasRef = useRef(null);
+  const containerRef = useRef(null);
   const [containerSize, setContainerSize] = useState({width: 1024, height: 128});
 
   useEffect(() => {
-    //const container = canvasRef.current;
-    //setContainerSize({
-    //  width: container.clientWidth,
-    //  height: container.clientWidth*(128/1024)
-    //});
-    //const resizeObserver = new ResizeObserver(entries => {
-    //  for (const entry of entries) {
-    //    const { width } = entry.contentRect;
-    //    setContainerSize({
-    //      width: width,
-    //      height: width * (128/1024)
-    //    });
-    //  }
-    //});
-    //resizeObserver.observe(container);
-    //return () => {
-    //  resizeObserver.disconnect(container);
-    //};
+    const container = containerRef.current;
     function updateSize() {
       if (!canvasRef.current) return;
-      const container = canvasRef.current;
       const width = window.innerWidth;
       //const width = container.clientWidth;
       setContainerSize({
@@ -36,9 +19,12 @@ function FyiBanner() {
       });
     }
     updateSize();
-    window.addEventListener('resize', updateSize);
+    const resizeObserver = new ResizeObserver(() => {
+      updateSize();
+    });
+    resizeObserver.observe(container);
     return () => {
-      window.removeEventListener('resize', updateSize);
+      resizeObserver.disconnect(container);
     };
   }, []);
 
@@ -152,6 +138,7 @@ function FyiBanner() {
         gl_FragColor = texrainbow;
       }
     `;
+
     function createBanner() {
       const positions = [-1.0, 1.0, 0.0,  //top left
                          -1.0,-1.0, 0.0,  //bot left
@@ -306,14 +293,22 @@ function FyiBanner() {
   }, [containerSize]);
 
   return (
-    <canvas
-      ref={canvasRef}
+    <div
+      ref={containerRef}
       style={{
-        width: containerSize.width,
-        height: '100%',
-        display: 'block'
+        width: '100vw',
+        position: 'relative'
       }}
-    />
+    >
+      <canvas
+        ref={canvasRef}
+        style={{
+          width: containerSize.width,
+          height: '100%',
+          display: 'block'
+        }}
+      />
+    </div>
   );
 }
 
